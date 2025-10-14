@@ -60,7 +60,7 @@ void render_voronoi(void){
     int k = WIDTH/2;
     while(k > 2){
         int offset = k/2;
-        for(int y = offset-1; y < HEIGHT - offset; ++y){
+        for(int y = offset; y < HEIGHT - offset; ++y){
             for(int x = offset; x < WIDTH - offset; ++x){
                 Point neighbors[8] = {
                     {x - offset, y - offset}, {x, y - offset}, {x + offset, y - offset},
