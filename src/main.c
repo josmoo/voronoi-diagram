@@ -7,15 +7,14 @@
 #include <time.h>
 
 #define WIDTH 800
-#define HEIGHT 600
+#define HEIGHT 800
 
 #define SEEDS_COUNT 10
-#define SEED_MARKER_RADIUS 10
+#define SEED_MARKER_RADIUS 1
 #define SEED_MARKER_COLOR 0xFF000000
 #define UNDEFINED_COLOR 0x00BABABA
 
-#define EMPTY_ORIGIN -1
-#define IS_AN_ORIGIN -2
+#define EMPTY_ORIGIN (Point){-1,-1}
 
 #define OUTPUT_FILE_PATH "output.ppm"
 
@@ -25,7 +24,7 @@ typedef struct {
 
 typedef struct {
     uint32_t color;
-    int origin_sqr_dist;
+    Point origin;
 } Pixel;
 
 static Pixel image[HEIGHT][WIDTH];
@@ -54,7 +53,7 @@ void fill_seed_marker(int cx, int cy, int radius, uint32_t color){
                 continue;
             }
             if(sqr_dist(cx, cy, x, y) <= radius*radius){
-                image[y][x] = (Pixel){color, IS_AN_ORIGIN};
+                image[y][x] = (Pixel){color, (Point){cx, cy}};
             }
             
         }
@@ -72,15 +71,40 @@ void render_seed_markers(void){
 }
 
 void render_voronoi(void){
-    // for(int k = WIDTH/2; k < 2; k/=2){
-    //     for(int y = 0; y < HEIGHT; ++y){
-    //         for(int x = 0; x < WIDTH; ++x){
+    int k = WIDTH/2;
+    while(k > 2){
+        int offset = k/2;
+        for(int y = offset; y < HEIGHT - offset; ++y){
+            for(int x = offset; x < WIDTH - offset; ++x){
+                Point neighbors[8] = {
+                    {x - offset, y - offset}, {x, y - offset}, {x + offset, y - offset},
+                    {x - offset, y},                           {x + offset, y},
+                    {x - offset, y + offset}, {x, y + offset}, {x + offset, y + offset} 
+                };
+                for(int i = 0; i < 8; ++i){
+                    uint32_t neighbors_color = image[neighbors[i].y][neighbors[i].x].color;
+                    if(neighbors_color == UNDEFINED_COLOR){
+                       continue;
+                    }
 
-
-    //             if(image[y][x].color == )
-    //         }
-    //     }
-    // }
+                    Point neighbors_origin = image[neighbors[i].y][neighbors[i].x].origin;
+                    if(image[y][x].color == UNDEFINED_COLOR){
+                        image[y][x].color = neighbors_color;
+                        image[y][x].origin = neighbors_origin;
+                        continue;
+                    }
+                    int sqr_dist_to_pixel_origin = sqr_dist(x, y, image[y][x].origin.x, image[y][x].origin.y);
+                    int sqr_dist_to_neighbor_origin = sqr_dist(x, y, neighbors_origin.x, neighbors_origin.y);
+                    if(sqr_dist_to_neighbor_origin < sqr_dist_to_pixel_origin){
+                       image[y][x].color = neighbors_color;
+                       image[y][x].origin = neighbors_origin;
+                       continue;
+                    }
+                }
+            }
+        }
+        k = offset;
+    }
 }
 
 void fill_image(uint32_t color){
@@ -119,6 +143,7 @@ int main(void){
     generate_random_seeds();
     fill_image(UNDEFINED_COLOR); 
     render_seed_markers();
+    render_voronoi();
     save_image_as_ppm(OUTPUT_FILE_PATH);
     printf("hello world");
     return 0;
