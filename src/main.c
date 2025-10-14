@@ -12,7 +12,10 @@
 #define SEEDS_COUNT 10
 #define SEED_MARKER_RADIUS 10
 #define SEED_MARKER_COLOR 0xFF000000
-#define DIAGARM_BACKGROUND_DEFAULT 0x00BABABA
+#define UNDEFINED_COLOR 0x00BABABA
+
+#define EMPTY_ORIGIN -1
+#define IS_AN_ORIGIN -2
 
 #define OUTPUT_FILE_PATH "output.ppm"
 
@@ -20,7 +23,12 @@ typedef struct {
     int x, y;
 } Point;
 
-static uint32_t image[HEIGHT][WIDTH];
+typedef struct {
+    uint32_t color;
+    int origin_sqr_dist;
+} Pixel;
+
+static Pixel image[HEIGHT][WIDTH];
 static Point seeds[SEEDS_COUNT];
  
 void generate_random_seeds(void){
@@ -36,7 +44,7 @@ int sqr_dist(int x1, int y1, int x2, int y2){
     return dx*dx + dy*dy;
 }
 
-void fill_circle(int cx, int cy, int radius, uint32_t color){
+void fill_seed_marker(int cx, int cy, int radius, uint32_t color){
     Point start = {cx - radius, cy - radius};
     Point end = {cx + radius, cy + radius};
 
@@ -46,40 +54,42 @@ void fill_circle(int cx, int cy, int radius, uint32_t color){
                 continue;
             }
             if(sqr_dist(cx, cy, x, y) <= radius*radius){
-                image[y][x] = color;
+                image[y][x] = (Pixel){color, IS_AN_ORIGIN};
             }
             
         }
     }
 }
 
+void fill_seed_marker_random_color(int cx, int cy, int radius){
+    fill_seed_marker(cx, cy, radius, ((rand() % 0x1000000) + 0xFF000000));
+}
+
 void render_seed_markers(void){
     for(size_t i = 0; i < SEEDS_COUNT; ++i){
-        fill_circle(seeds[i].x, seeds[i].y, SEED_MARKER_RADIUS, SEED_MARKER_COLOR);
+        fill_seed_marker_random_color(seeds[i].x, seeds[i].y, SEED_MARKER_RADIUS);
     }
 }
 
 void render_voronoi(void){
-    for(int y = 0; y < HEIGHT; ++y){
-        for(int x = 0; x < WIDTH; ++x){
-            int j = 0;
-            for (size_t i = 1; i < SEEDS_COUNT; ++i){
-                sqr_dist(seeds[i].x, seeds[i].y, x, y);
-                sqr_dist(seeds[j].x, seeds[j].y, x, y);
-            }
-        }
-    }
-}
+    // for(int k = WIDTH/2; k < 2; k/=2){
+    //     for(int y = 0; y < HEIGHT; ++y){
+    //         for(int x = 0; x < WIDTH; ++x){
 
+
+    //             if(image[y][x].color == )
+    //         }
+    //     }
+    // }
+}
 
 void fill_image(uint32_t color){
     for(size_t y = 0; y < HEIGHT; ++y){
         for(size_t x = 0; x < WIDTH; ++x){
-            image[y][x] = color;
+            image[y][x] = (Pixel){color, EMPTY_ORIGIN};
         }
     }
 }
-
 
 void save_image_as_ppm(const char *file_path){
     FILE *f = fopen(file_path, "wb");
@@ -90,13 +100,13 @@ void save_image_as_ppm(const char *file_path){
     fprintf(f, "P6\n%d %d 255\n", WIDTH, HEIGHT);
     for(size_t y = 0; y < HEIGHT; ++y){
         for(size_t x = 0; x < WIDTH; ++x){
-            uint32_t pixel = image[y][x];
+            Pixel pixel = image[y][x];
 
             //little endian
             uint8_t bytes[3] = { 
-                (pixel & 0x000000FF),    //R
-                (pixel & 0x0000FF00)>>8, //G
-                (pixel & 0x00FF0000)>>16 //B
+                (pixel.color & 0x000000FF),    //R
+                (pixel.color & 0x0000FF00)>>8, //G
+                (pixel.color & 0x00FF0000)>>16 //B
             };
             fwrite(bytes, sizeof(bytes), 1, f);
             assert(!ferror(f));
@@ -107,7 +117,7 @@ void save_image_as_ppm(const char *file_path){
 
 int main(void){
     generate_random_seeds();
-    fill_image(0xFFFFDD00); 
+    fill_image(UNDEFINED_COLOR); 
     render_seed_markers();
     save_image_as_ppm(OUTPUT_FILE_PATH);
     printf("hello world");
