@@ -12,6 +12,7 @@
 #define SEEDS_COUNT 10
 #define SEED_MARKER_RADIUS 10
 #define SEED_MARKER_COLOR 0xFF000000
+#define DIAGARM_BACKGROUND_DEFAULT 0x00BABABA
 
 #define OUTPUT_FILE_PATH "output.ppm"
 
@@ -58,17 +59,17 @@ void render_seed_markers(void){
     }
 }
 
-// void render_voronoi(void){
-//     for(int y = 0; y < HEIGHT; ++y){
-//         for(int x = 0; x < WIDTH; ++x){
-//             int j = 0;
-//             for (size_t i = 1; i < SEEDS_COUNT; ++i){
-//                 sqr_dist(seeds[i].x, seeds[i].y, x, y);
-//                 sqr_dist(seeds[j].x, seeds[j].y, x, y);
-//             }
-//         }
-//     }
-// }
+void render_voronoi(void){
+    for(int y = 0; y < HEIGHT; ++y){
+        for(int x = 0; x < WIDTH; ++x){
+            int j = 0;
+            for (size_t i = 1; i < SEEDS_COUNT; ++i){
+                sqr_dist(seeds[i].x, seeds[i].y, x, y);
+                sqr_dist(seeds[j].x, seeds[j].y, x, y);
+            }
+        }
+    }
+}
 
 
 void fill_image(uint32_t color){
