@@ -9,8 +9,7 @@
 #define WIDTH 800
 #define HEIGHT 800
 
-#define SEEDS_COUNT 10
-#define SEED_MARKER_RADIUS 1
+#define SEEDS_COUNT 32
 #define SEED_MARKER_COLOR 0xFF000000
 #define UNDEFINED_COLOR 0x00BABABA
 
@@ -43,30 +42,17 @@ int sqr_dist(int x1, int y1, int x2, int y2){
     return dx*dx + dy*dy;
 }
 
-void fill_seed_marker(int cx, int cy, int radius, uint32_t color){
-    Point start = {cx - radius, cy - radius};
-    Point end = {cx + radius, cy + radius};
-
-    for(int x = start.x; x < end.x; ++x){
-        for (int y = start.y; y < end.y; ++y){
-            if(x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT){
-                continue;
-            }
-            if(sqr_dist(cx, cy, x, y) <= radius*radius){
-                image[y][x] = (Pixel){color, (Point){cx, cy}};
-            }
-            
-        }
-    }
+void fill_seed_marker(int x, int y,uint32_t color){
+    image[y][x] = (Pixel){color, (Point){x, y}};
 }
 
-void fill_seed_marker_random_color(int cx, int cy, int radius){
-    fill_seed_marker(cx, cy, radius, ((rand() % 0x1000000) + 0xFF000000));
+void fill_seed_marker_random_color(int x, int y){
+    fill_seed_marker(x, y, ((rand() % 0x1000000) + 0xFF000000));
 }
 
 void render_seed_markers(void){
     for(size_t i = 0; i < SEEDS_COUNT; ++i){
-        fill_seed_marker_random_color(seeds[i].x, seeds[i].y, SEED_MARKER_RADIUS);
+        fill_seed_marker_random_color(seeds[i].x, seeds[i].y);
     }
 }
 
@@ -74,7 +60,7 @@ void render_voronoi(void){
     int k = WIDTH/2;
     while(k > 2){
         int offset = k/2;
-        for(int y = offset; y < HEIGHT - offset; ++y){
+        for(int y = offset-1; y < HEIGHT - offset; ++y){
             for(int x = offset; x < WIDTH - offset; ++x){
                 Point neighbors[8] = {
                     {x - offset, y - offset}, {x, y - offset}, {x + offset, y - offset},
