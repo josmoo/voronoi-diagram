@@ -57,7 +57,6 @@ void render_seed_markers(void){
 //https://en.wikipedia.org/wiki/Jump_flooding_algorithm#Implementation
 void render_voronoi(void){
     for(int k = WIDTH_AND_HEIGHT/2; k > 0; k/=2){
-        printf("%d ",k);
         for (int y = 0; y < WIDTH_AND_HEIGHT; ++y){
             for (int x = 0; x < WIDTH_AND_HEIGHT; ++x){
                 for(int i = y - k; i <= k + y; i += k){
